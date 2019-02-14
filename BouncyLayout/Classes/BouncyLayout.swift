@@ -62,7 +62,19 @@ open class BouncyLayout: UICollectionViewFlowLayout {
     
     private func newBehaviors(for attributes: [UICollectionViewLayoutAttributes]) -> [UIAttachmentBehavior] {
         let indexPaths = animator.behaviors.compactMap { (($0 as? UIAttachmentBehavior)?.items.first as? UICollectionViewLayoutAttributes)?.indexPath }
-        return attributes.compactMap { indexPaths.contains($0.indexPath) ? nil : UIAttachmentBehavior(item: $0, attachedToAnchor: $0.center.floored()) }
+
+        return attributes.compactMap {
+            let newAttribute = $0
+            let oldBehavior = animator.behaviors.first(where: {
+                let oldAttribute = (($0 as? UIAttachmentBehavior)?.items.first as? UICollectionViewLayoutAttributes)
+                return oldAttribute?.indexPath == newAttribute.indexPath
+            })
+            let oldAttribute = (oldBehavior as? UIAttachmentBehavior)?.items.first as? UICollectionViewLayoutAttributes
+            if let oldBehavior = oldBehavior, newAttribute.frame.height != oldAttribute?.frame.height {
+                animator.removeBehavior(oldBehavior)
+            }
+            return indexPaths.contains($0.indexPath) ? nil : UIAttachmentBehavior(item: $0, attachedToAnchor: $0.center.floored())
+        }
     }
     
     open override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
